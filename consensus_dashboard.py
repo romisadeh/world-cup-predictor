@@ -69,7 +69,7 @@ def main():
     st.sidebar.metric("Polymarket weight", f"{int(w_poly*100)}%")
     st.sidebar.divider()
     use_poly = st.sidebar.checkbox(
-        "Fetch match-specific Polymarket market", value=False,
+        "Fetch match-specific Polymarket market", value=True,
         help="Slower - searches for a separate market for this exact match",
     )
 
