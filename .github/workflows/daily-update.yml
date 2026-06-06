@@ -35,6 +35,11 @@ jobs:
           # FOOTBALL_DATA_KEY: ${{ secrets.FOOTBALL_DATA_KEY }}
         run: python 1_fetch_data.py
 
+        - name: Write last-updated timestamp
+        run: |
+          mkdir -p data
+          TZ="Asia/Jerusalem" date +'%d/%m/%Y %H:%M' > data/last_updated.txt
+
       - name: Commit updated data
         run: |
           git config user.name "github-actions[bot]"
