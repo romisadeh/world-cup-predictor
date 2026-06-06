@@ -52,6 +52,10 @@ def load_polymarket():
 def main():
     st.title("World Cup 2026 - Consensus Predictor")
     st.caption("Merges live probabilities from 55 bookmakers + Polymarket. No historical data.")
+    import os
+if os.path.exists("data/last_updated.txt"):
+    with open("data/last_updated.txt", encoding="utf-8") as _f:
+        st.caption(f"עודכן לאחרונה: {_f.read().strip()}")
 
     odds = load_odds()
     if odds is None:
