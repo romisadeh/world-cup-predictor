@@ -1,0 +1,45 @@
+name: Daily Data Update
+
+# מתי לרוץ:
+on:
+  schedule:
+    # כל יום ב-06:00 UTC = 09:00 שעון ישראל (קיץ). שנה לפי הצורך.
+    - cron: '0 6 * * *'
+  workflow_dispatch:   # מאפשר גם הרצה ידנית בלחיצת כפתור מלשונית Actions
+
+permissions:
+  contents: write   # נדרש כדי שה-Action יוכל לדחוף את הקבצים המעודכנים חזרה ל-repo
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run daily update
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+        run: python daily_update.py
+
+      - name: Commit updated data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Auto-update data $(date -u +'%Y-%m-%d %H:%M UTC')"
+            git push
+          fi
