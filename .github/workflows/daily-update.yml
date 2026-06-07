@@ -2,12 +2,12 @@ name: Daily Data Update
 
 on:
   schedule:
-    # כל יום ב-06:00 UTC = 09:00 שעון ישראל
-    - cron: '0 6 * * *'
-  workflow_dispatch:   # מאפשר הרצה ידנית בלחיצת כפתור
+    # כל יום ב-06:12 UTC = 09:12 שעון ישראל (שעה לא עגולה למניעת עומסי שרת)
+    - cron: '12 6 * * *'
+  workflow_dispatch:   # מאפשר לך להריץ ידנית בכל רגע בלחיצת כפתור
 
 permissions:
-  contents: write   # נדרש כדי לדחוף את הקבצים המעודכנים חזרה ל-Repository
+  contents: write   # נדרש כדי לתת לבוט הרשאה לדחוף את הקבצים המעודכנים חזרה ל-Repository
 
 jobs:
   update:
@@ -24,18 +24,15 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          # התקנת החבילות ישירות בלי צורך בקובץ requirements.txt חיצוני
           pip install requests pandas numpy python-dotenv
 
       - name: Run daily update
         env:
-          # שליפת המפתח החסוי שהגדרת בתוך ה-Secrets של ה-Repo
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
-          # אם הסקריפט שלך משתמש גם במפתח של Football-Data, הסירי את ה-# מהשורה הבאה:
           # FOOTBALL_DATA_KEY: ${{ secrets.FOOTBALL_DATA_KEY }}
         run: python 1_fetch_data.py
 
-        - name: Write last-updated timestamp
+      - name: Write last-updated timestamp
         run: |
           mkdir -p data
           TZ="Asia/Jerusalem" date +'%d/%m/%Y %H:%M' > data/last_updated.txt
