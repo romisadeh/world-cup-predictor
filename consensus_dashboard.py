@@ -139,7 +139,7 @@ def main():
     # ── Scoreline section ──────────────────────────────────────────────────
     st.subheader("Scoreline probabilities")
 
-    if poly_exact:
+    if poly_exact and w_poly > 0:
         # Use live Polymarket exact-score market directly
         matrix = poly_exact
         top10 = top_scorelines(matrix, n=10)
