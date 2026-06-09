@@ -2,7 +2,8 @@
 World Cup 2026 - Consensus Dashboard (Streamlit)
 ==================================================
 Dashboard for the consensus approach: merges bookmakers + Polymarket,
-and shows scoreline probabilities via a Poisson model.
+and shows scoreline probabilities (Polymarket exact-score market when available,
+Poisson model as fallback).
 
 Install:
     pip install streamlit plotly pandas requests scipy
@@ -24,6 +25,7 @@ from consensus_predict import (
     build_consensus,
     fetch_polymarket_2026,
     fetch_polymarket_match,
+    fetch_polymarket_exact_scores,
     estimate_expected_goals,
     scoreline_matrix,
     top_scorelines,
@@ -49,13 +51,22 @@ def load_polymarket():
     return fetch_polymarket_2026()
 
 
+@st.cache_data(ttl=300)
+def cached_fetch_match(home, away):
+    return fetch_polymarket_match(home, away)
+
+
+@st.cache_data(ttl=300)
+def cached_fetch_exact_scores(home, away):
+    return fetch_polymarket_exact_scores(home, away)
+
+
 def main():
     st.title("World Cup 2026 - Consensus Predictor")
     st.caption("Merges live probabilities from 55 bookmakers + Polymarket. No historical data.")
     if os.path.exists("data/last_updated.txt"):
         with open("data/last_updated.txt", encoding="utf-8") as _f:
             st.caption(f"עודכן לאחרונה: {_f.read().strip()}")
-
 
     odds = load_odds()
     if odds is None:
@@ -70,7 +81,7 @@ def main():
     st.sidebar.divider()
     use_poly = st.sidebar.checkbox(
         "Fetch match-specific Polymarket market", value=True,
-        help="Slower - searches for a separate market for this exact match",
+        help="Searches for a dedicated Polymarket market for this exact match",
     )
 
     # Match selection
@@ -87,14 +98,19 @@ def main():
     row = upcoming.iloc[idx]
     home, away = row["home_team"], row["away_team"]
 
+    poly_winner = load_polymarket() if use_poly else {}
+
     poly_match = None
+    poly_exact = None
     if use_poly:
-        with st.spinner("Searching Polymarket for this match..."):
-            poly_match = fetch_polymarket_match(home, away)
+        with st.spinner("Fetching Polymarket data for this match..."):
+            poly_match = cached_fetch_match(home, away)
+            poly_exact = cached_fetch_exact_scores(home, away)
 
     # Consensus
     cons_h, cons_d, cons_a, sources = build_consensus(
-        row, poly_match=poly_match, w_bookmakers=w_book, w_polymarket=w_poly,
+        row, poly_match=poly_match, poly_winner=poly_winner,
+        w_bookmakers=w_book, w_polymarket=w_poly,
     )
     pH, pD, pA = cons_h * 100, cons_d * 100, cons_a * 100
     winner = [f"{home} win", "Draw", f"{away} win"][int(np.argmax([pH, pD, pA]))]
@@ -120,45 +136,76 @@ def main():
                       plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", height=320)
     st.plotly_chart(fig, use_container_width=True)
 
-    # Scoreline section (Poisson)
+    # ── Scoreline section ──────────────────────────────────────────────────
     st.subheader("Scoreline probabilities")
-    with st.spinner("Computing scoreline model..."):
-        lam_h, lam_a = estimate_expected_goals(cons_h, cons_d, cons_a)
-        matrix = scoreline_matrix(lam_h, lam_a)
+
+    if poly_exact:
+        # Use live Polymarket exact-score market directly
+        matrix = poly_exact
         top10 = top_scorelines(matrix, n=10)
+        scoreline_source = "Polymarket exact-score market"
 
-    cc1, cc2 = st.columns([1, 1])
-    with cc1:
-        st.metric("Expected goals", f"{lam_h:.2f} - {lam_a:.2f}")
-        st.caption(f"{home} xG: {lam_h:.2f} . {away} xG: {lam_a:.2f}")
-        st.metric("Most likely score", f"{top10[0][0]}  ({top10[0][1]}%)")
-    with cc2:
-        score_fig = go.Figure(go.Bar(
-            x=[s for s, _ in top10], y=[p for _, p in top10],
-            marker_color="#1D9E75",
-            text=[f"{p}%" for _, p in top10], textposition="outside",
-        ))
-        score_fig.update_layout(yaxis_title="Probability (%)", xaxis_title="Score (home-away)",
-                                plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", height=300)
-        st.plotly_chart(score_fig, use_container_width=True)
+        cc1, cc2 = st.columns([1, 1])
+        with cc1:
+            st.metric("Most likely score", f"{top10[0][0]}  ({top10[0][1]}%)")
+            st.caption(f"Source: {scoreline_source}")
+        with cc2:
+            score_fig = go.Figure(go.Bar(
+                x=[s for s, _ in top10], y=[p for _, p in top10],
+                marker_color="#1D9E75",
+                text=[f"{p}%" for _, p in top10], textposition="outside",
+            ))
+            score_fig.update_layout(
+                yaxis_title="Probability (%)", xaxis_title="Score (home-away)",
+                plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", height=300,
+            )
+            st.plotly_chart(score_fig, use_container_width=True)
+    else:
+        # Fallback: Poisson model derived from consensus H/D/A
+        with st.spinner("Computing Poisson scoreline model..."):
+            lam_h, lam_a = estimate_expected_goals(cons_h, cons_d, cons_a)
+            matrix = scoreline_matrix(lam_h, lam_a)
+            top10 = top_scorelines(matrix, n=10)
+        scoreline_source = "Poisson model"
 
-    # Scoreline heatmap
+        cc1, cc2 = st.columns([1, 1])
+        with cc1:
+            st.metric("Expected goals", f"{lam_h:.2f} - {lam_a:.2f}")
+            st.caption(f"{home} xG: {lam_h:.2f} . {away} xG: {lam_a:.2f}")
+            st.metric("Most likely score", f"{top10[0][0]}  ({top10[0][1]}%)")
+            st.caption(f"Source: {scoreline_source}")
+        with cc2:
+            score_fig = go.Figure(go.Bar(
+                x=[s for s, _ in top10], y=[p for _, p in top10],
+                marker_color="#1D9E75",
+                text=[f"{p}%" for _, p in top10], textposition="outside",
+            ))
+            score_fig.update_layout(
+                yaxis_title="Probability (%)", xaxis_title="Score (home-away)",
+                plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", height=300,
+            )
+            st.plotly_chart(score_fig, use_container_width=True)
+
+    # Full scoreline heatmap (up to 3-3, same for both sources)
     st.subheader("Full scoreline grid")
-    max_g = 5
+    max_g = 3
     z = [[matrix.get((h, a), 0) * 100 for a in range(max_g + 1)] for h in range(max_g + 1)]
     heat = go.Figure(go.Heatmap(
         z=z,
         x=[f"{a}" for a in range(max_g + 1)],
         y=[f"{h}" for h in range(max_g + 1)],
         colorscale="Greens",
-        text=[[f"{v:.1f}%" for v in row] for row in z],
+        text=[[f"{v:.1f}%" for v in row_vals] for row_vals in z],
         texttemplate="%{text}", colorbar=dict(title="%"),
     ))
-    heat.update_layout(xaxis_title=f"{away} goals", yaxis_title=f"{home} goals",
-                       plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", height=380)
+    heat.update_layout(
+        xaxis_title=f"{away} goals", yaxis_title=f"{home} goals",
+        plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", height=380,
+    )
+    st.caption(f"Scoreline source: {scoreline_source}")
     st.plotly_chart(heat, use_container_width=True)
 
-    # Source breakdown
+    # Source breakdown table
     st.subheader("Source breakdown")
     comp = pd.DataFrame({
         "Outcome": [home, "Draw", away],
@@ -167,7 +214,7 @@ def main():
     })
     if poly_match:
         t = sum(poly_match)
-        comp["Polymarket"] = [poly_match[0]/t*100, poly_match[1]/t*100, poly_match[2]/t*100]
+        comp["Polymarket (moneyline)"] = [poly_match[0]/t*100, poly_match[1]/t*100, poly_match[2]/t*100]
     st.dataframe(comp.round(1), use_container_width=True, hide_index=True)
 
     if "std_home_prob" in row and not pd.isna(row["std_home_prob"]):
