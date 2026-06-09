@@ -110,8 +110,7 @@ def fetch_world_cup_odds():
         ).reset_index()
 
         consensus.to_csv(f"{OUTPUT_DIR}/odds_consensus.csv", index=False)
-        df.to_csv(f"{OUTPUT_DIR}/odds_raw.csv", index=False)
-        print(f"   💾 שמור: odds_raw.csv ({len(df)} שורות) | odds_consensus.csv ({len(consensus)} משחקים)")
+        print(f"   💾 שמור: odds_consensus.csv ({len(consensus)} משחקים, {len(df)} שורות גולמיות)")
 
     return df
 
@@ -306,9 +305,7 @@ def fetch_polymarket_wc():
         ]
 
         if wc_markets:
-            df = pd.DataFrame(wc_markets)
-            df.to_csv(f"{OUTPUT_DIR}/polymarket_raw.csv", index=False)
-            print(f"   ✅ {len(wc_markets)} שווקים | שמור: polymarket_raw.csv")
+            print(f"   ✅ {len(wc_markets)} שווקים נמצאו")
         else:
             print("   ℹ️  לא נמצאו שווקים פעילים למונדיאל 2026 (עדיין מוקדם)")
 
