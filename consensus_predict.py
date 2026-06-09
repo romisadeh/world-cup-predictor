@@ -14,8 +14,11 @@ World Cup 2026 - Live Consensus Predictor
 """
 
 import os
+import re
 import sys
+import json
 import argparse
+import functools
 import requests
 import numpy as np
 import pandas as pd
@@ -24,6 +27,105 @@ from datetime import datetime, timezone
 
 DATA_DIR = "data"
 GAMMA_API = "https://gamma-api.polymarket.com"
+WC_SERIES_SLUG = "soccer-fifwc"
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 0. HELPERS — name normalisation & slug index
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Bookmaker/common name ↔ Polymarket name mapping (covers both directions via
+# the auto-generated reverse below).
+_NAME_ALIASES = {
+    "czech republic":           "czechia",
+    "turkey":                   "turkiye",
+    "bosnia and herzegovina":   "bosnia-herzegovina",
+    "bosnia":                   "bosnia-herzegovina",
+    "dr congo":                 "congo dr",
+    "congo":                    "congo dr",
+    "democratic republic of congo": "congo dr",
+    "cape verde":               "cabo verde",
+    "curacao":                  "curaçao",
+    "republic of ireland":      "ireland",
+    "trinidad & tobago":        "trinidad and tobago",
+    "united states":            "usa",
+    "united states of america": "usa",
+    "korea republic":           "south korea",
+    "iran (islamic republic)":  "iran",
+    "ir iran":                  "iran",
+    "ivory coast":              "côte d'ivoire",
+    "cote d'ivoire":            "côte d'ivoire",
+}
+_NAME_ALIASES.update({v: k for k, v in list(_NAME_ALIASES.items()) if v not in _NAME_ALIASES})
+
+
+def _parse_price_list(val):
+    """Parse outcomePrices which may be a JSON string or a real list."""
+    if isinstance(val, list):
+        return val
+    if isinstance(val, str) and val.strip():
+        try:
+            return json.loads(val)
+        except Exception:
+            return []
+    return []
+
+
+def _teams_match(csv_name: str, poly_name: str) -> bool:
+    """Return True if the two team name strings refer to the same team."""
+    a = csv_name.strip().lower()
+    b = poly_name.strip().lower()
+    if a == b:
+        return True
+    # static alias in either direction
+    if _NAME_ALIASES.get(a, "").lower() == b:
+        return True
+    if _NAME_ALIASES.get(b, "").lower() == a:
+        return True
+    # substring
+    if a in b or b in a:
+        return True
+    # token overlap: any significant word (>=4 chars) from a appears in b
+    tokens = {w for w in a.split() if len(w) >= 4}
+    return bool(tokens and any(tok in b for tok in tokens))
+
+
+@functools.lru_cache(maxsize=1)
+def fetch_fifwc_slug_index():
+    """
+    Fetches all active FIFA WC match events from the Gamma series.
+    Returns a tuple of (home_poly_name, away_poly_name, slug) for each match.
+    Cached for the lifetime of the process.
+    """
+    try:
+        resp = requests.get(
+            f"{GAMMA_API}/events",
+            params={"series_slug": WC_SERIES_SLUG, "active": True, "limit": 150},
+            timeout=20,
+        )
+        if resp.status_code != 200:
+            return ()
+        result = []
+        for ev in resp.json():
+            slug = ev.get("slug", "")
+            title = ev.get("title", "")
+            # Only plain match events (skip exact-score / halftime sub-events)
+            if " vs. " not in title or "exact-score" in slug or "halftime" in slug:
+                continue
+            parts = title.split(" vs. ", 1)
+            if len(parts) == 2:
+                result.append((parts[0].strip(), parts[1].strip(), slug))
+        return tuple(result)
+    except Exception:
+        return ()
+
+
+def _find_match_slug(home: str, away: str):
+    """Return the Polymarket event slug for a given home/away pair, or None."""
+    for home_poly, away_poly, slug in fetch_fifwc_slug_index():
+        if _teams_match(home, home_poly) and _teams_match(away, away_poly):
+            return slug
+    return None
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -38,7 +140,6 @@ def fetch_polymarket_2026():
     print("🔮 מושך Polymarket (מונדיאל 2026)...", end=" ", flush=True)
 
     probs = {}
-    # מנסה כמה slugs אפשריים (Polymarket משנים מדי פעם)
     slugs = ["world-cup-winner", "2026-world-cup-winner", "fifa-world-cup-2026-winner"]
 
     event = None
@@ -60,19 +161,10 @@ def fetch_polymarket_2026():
     try:
         if event:
             for market in event.get("markets", []):
-                # כל market הוא "Will X win?" — שם הקבוצה + מחיר ה-Yes
                 team = market.get("groupItemTitle") or market.get("question", "")
-                # outcomePrices הוא לרוב string של רשימה: '["0.17","0.83"]'
-                prices = market.get("outcomePrices", "[]")
-                if isinstance(prices, str):
-                    import json
-                    try:
-                        prices = json.loads(prices)
-                    except Exception:
-                        prices = []
+                prices = _parse_price_list(market.get("outcomePrices", "[]"))
                 if prices and team:
-                    yes_price = float(prices[0])
-                    probs[team.strip()] = yes_price
+                    probs[team.strip()] = float(prices[0])
 
         print(f"✅ {len(probs)} קבוצות")
 
@@ -83,59 +175,68 @@ def fetch_polymarket_2026():
     return probs
 
 
+def _parse_moneyline_event(event, home, away):
+    """
+    Extract (p_home, p_draw, p_away) from a moneyline event dict.
+    Returns None if home or away probabilities cannot be found.
+    """
+    team_probs = {}
+    p_draw = None
+
+    for m in event.get("markets", []):
+        git = (m.get("groupItemTitle") or "").strip()
+        prices = _parse_price_list(m.get("outcomePrices"))
+        if not git or not prices:
+            continue
+        try:
+            yes_price = float(prices[0])
+        except Exception:
+            continue
+        if "draw" in git.lower() or "tie" in git.lower():
+            p_draw = yes_price
+        else:
+            team_probs[git] = yes_price
+
+    def _find(team):
+        for g, v in team_probs.items():
+            if g.strip().lower() == team.strip().lower():
+                return v
+        for g, v in team_probs.items():
+            if _teams_match(team, g):
+                return v
+        return None
+
+    p_home = _find(home)
+    p_away = _find(away)
+    if p_home is not None and p_away is not None:
+        return (p_home, p_draw or 0.0, p_away)
+    return None
+
+
 def fetch_polymarket_match(home, away):
     """
     מוצא שוק Polymarket ספציפי למשחק. מחזיר (p_home, p_draw, p_away) או None.
-    מבנה Polymarket: כל תוצאה היא שוק כן/לא נפרד — שם התוצאה ב-groupItemTitle,
-    וההסתברות היא המחיר הראשון (Yes). התיקו מסומן כ-"Draw (...)".
+    Uses the slug index first (reliable); falls back to public-search.
     """
-    import json
+    # Primary path: slug index → direct event fetch
+    slug = _find_match_slug(home, away)
+    if slug:
+        try:
+            resp = requests.get(
+                f"{GAMMA_API}/events",
+                params={"slug": slug},
+                timeout=15,
+            )
+            if resp.status_code == 200:
+                events = resp.json()
+                if events:
+                    res = _parse_moneyline_event(events[0], home, away)
+                    if res:
+                        return res
+        except Exception:
+            pass
 
-    def _parse_list(val):
-        if isinstance(val, list):
-            return val
-        if isinstance(val, str) and val.strip():
-            try:
-                return json.loads(val)
-            except Exception:
-                return []
-        return []
-
-    def _norm(s):
-        return (s or "").strip().lower()
-
-    def _parse_event(event):
-        team_probs = {}
-        p_draw = None
-        for m in event.get("markets", []):
-            git = (m.get("groupItemTitle") or "").strip()
-            prices = _parse_list(m.get("outcomePrices"))
-            if not git or not prices:
-                continue
-            try:
-                yes_price = float(prices[0])
-            except Exception:
-                continue
-            if "draw" in git.lower() or "tie" in git.lower():
-                p_draw = yes_price
-            else:
-                team_probs[git] = yes_price
-
-        def _find(team):
-            for g, v in team_probs.items():
-                if _norm(g) == _norm(team):
-                    return v
-            for g, v in team_probs.items():
-                if _norm(team) in _norm(g) or _norm(g) in _norm(team):
-                    return v
-            return None
-
-        p_home = _find(home)
-        p_away = _find(away)
-        if p_home is not None and p_away is not None:
-            return (p_home, p_draw or 0.0, p_away)
-        return None
-
+    # Fallback: public-search text query
     try:
         resp = requests.get(
             f"{GAMMA_API}/public-search",
@@ -144,12 +245,10 @@ def fetch_polymarket_match(home, away):
         )
         if resp.status_code != 200:
             return None
-        events = resp.json().get("events", []) or []
-
-        for event in events:
-            title = _norm(event.get("title"))
+        for event in (resp.json().get("events") or []):
+            title = (event.get("title") or "").lower()
             if home.lower() in title and away.lower() in title:
-                res = _parse_event(event)
+                res = _parse_moneyline_event(event, home, away)
                 if res:
                     return res
     except Exception:
@@ -158,9 +257,96 @@ def fetch_polymarket_match(home, away):
     return None
 
 
+def fetch_polymarket_exact_scores(home, away):
+    """
+    Fetches Polymarket exact-score market for a given match.
+    Returns {(home_goals, away_goals): probability} dict, normalized to sum=1,
+    or None if no market exists for this match.
+    """
+    slug = _find_match_slug(home, away)
+    if not slug:
+        return None
+
+    try:
+        resp = requests.get(
+            f"{GAMMA_API}/events",
+            params={"slug": f"{slug}-exact-score"},
+            timeout=15,
+        )
+        if resp.status_code != 200:
+            return None
+        events = resp.json()
+        if not events:
+            return None
+        event = events[0]
+    except Exception:
+        return None
+
+    matrix = {}
+    for m in event.get("markets", []):
+        git = m.get("groupItemTitle", "")
+        if not git or "any other" in git.lower():
+            continue
+        score_match = re.search(r"(\d+)\s*-\s*(\d+)", git)
+        if not score_match:
+            continue
+        h_goals = int(score_match.group(1))
+        a_goals = int(score_match.group(2))
+        prices = _parse_price_list(m.get("outcomePrices"))
+        if prices:
+            try:
+                matrix[(h_goals, a_goals)] = float(prices[0])
+            except Exception:
+                pass
+
+    if not matrix:
+        return None
+
+    total = sum(matrix.values())
+    if total <= 0:
+        return None
+    return {k: v / total for k, v in matrix.items()}
+
+
 # ═══════════════════════════════════════════════════════════════════════════
 # 2. CONSENSUS — איחוד מקורות לתחזית אחת
 # ═══════════════════════════════════════════════════════════════════════════
+
+def _poly_winner_to_match_probs(home, away, poly_winner, book_draw=None):
+    """
+    Bradley-Terry fallback: derives per-match (p_home, p_draw, p_away) from the
+    tournament-winner market when no per-match Polymarket market exists.
+
+    p(A beats B) ≈ p_winner_A / (p_winner_A + p_winner_B)
+    Draw probability is anchored to the bookmaker draw (or 0.25 if unavailable).
+    """
+    lw = {k.strip().lower(): v for k, v in poly_winner.items()}
+
+    def _lookup(team):
+        t = team.strip().lower()
+        if t in lw:
+            return lw[t]
+        alias = _NAME_ALIASES.get(t)
+        if alias and alias.lower() in lw:
+            return lw[alias.lower()]
+        for k, v in lw.items():
+            if t in k or k in t:
+                return v
+        tokens = {w for w in t.split() if len(w) >= 4}
+        for k, v in lw.items():
+            if any(tok in k for tok in tokens):
+                return v
+        return None
+
+    p_h = _lookup(home)
+    p_a = _lookup(away)
+    if p_h is None or p_a is None or (p_h + p_a) == 0:
+        return None
+
+    r = p_h / (p_h + p_a)
+    p_draw = max(0.10, min(0.40, book_draw if book_draw is not None else 0.25))
+    return (r * (1 - p_draw), p_draw, (1 - r) * (1 - p_draw))
+
 
 def build_consensus(odds_row, poly_match=None, poly_winner=None,
                     w_bookmakers=0.7, w_polymarket=0.3):
@@ -169,28 +355,32 @@ def build_consensus(odds_row, poly_match=None, poly_winner=None,
 
     מקורות:
       1. אודס בוקמייקרים (consensus כבר מ-55 ספקים) — משקל גבוה
-      2. Polymarket למשחק הספציפי (אם קיים)
+      2. Polymarket למשחק הספציפי (אם קיים), או שוק מנצח הטורניר כ-fallback
 
     משקלים ניתנים לכוונון. ברירת מחדל: 70% בוקמייקרים, 30% Polymarket.
     """
-    # מקור 1: בוקמייקרים (תמיד קיים)
     book_h = odds_row["avg_home_prob"]
     book_d = odds_row["avg_draw_prob"]
     book_a = odds_row["avg_away_prob"]
 
     sources = [("bookmakers", book_h, book_d, book_a, w_bookmakers)]
 
-    # מקור 2: Polymarket ספציפי למשחק
-    if poly_match:
-        ph, pd_, pa = poly_match
+    poly_source = poly_match
+    poly_source_name = "polymarket_match"
+    if poly_source is None and poly_winner:
+        home_team = str(odds_row.get("home_team", ""))
+        away_team = str(odds_row.get("away_team", ""))
+        poly_source = _poly_winner_to_match_probs(home_team, away_team, poly_winner, book_d)
+        poly_source_name = "polymarket_winner"
+
+    if poly_source:
+        ph, pd_, pa = poly_source
         total = ph + pd_ + pa
         if total > 0:
-            sources.append(("polymarket_match", ph / total, pd_ / total, pa / total, w_polymarket))
+            sources.append((poly_source_name, ph / total, pd_ / total, pa / total, w_polymarket))
 
-    # שקלול — עם הגנה מפני משקל כולל אפס
     total_w = sum(s[4] for s in sources)
     if total_w <= 0:
-        # אין נתוני Polymarket וגם 0% בוקמייקרים — נופלים חזרה לבוקמייקרים
         t = book_h + book_d + book_a
         return book_h / t, book_d / t, book_a / t, ["bookmakers"]
 
@@ -198,7 +388,6 @@ def build_consensus(odds_row, poly_match=None, poly_winner=None,
     cons_d = sum(s[2] * s[4] for s in sources) / total_w
     cons_a = sum(s[3] * s[4] for s in sources) / total_w
 
-    # נרמול סופי ל-100%
     t = cons_h + cons_d + cons_a
     return cons_h / t, cons_d / t, cons_a / t, [s[0] for s in sources]
 
@@ -215,11 +404,10 @@ def estimate_expected_goals(p_home, p_draw, p_away, max_goals=10):
     """
     lams = np.arange(0.2, 3.5, 0.05)
     goals = np.arange(max_goals + 1)
-    # pmf_table[i, g] = P(g שערים | lambda = lams[i])
     pmf_table = poisson.pmf(goals[None, :], lams[:, None])
 
-    il = np.tril_indices(max_goals + 1, k=-1)   # home > away  -> ניצחון בית
-    iu = np.triu_indices(max_goals + 1, k=1)    # home < away  -> ניצחון חוץ
+    il = np.tril_indices(max_goals + 1, k=-1)
+    iu = np.triu_indices(max_goals + 1, k=1)
     diag = np.arange(max_goals + 1)
 
     best = None
@@ -227,7 +415,7 @@ def estimate_expected_goals(p_home, p_draw, p_away, max_goals=10):
     for i, lam_h in enumerate(lams):
         ph_vec = pmf_table[i]
         for j, lam_a in enumerate(lams):
-            joint = np.outer(ph_vec, pmf_table[j])  # joint[h, a]
+            joint = np.outer(ph_vec, pmf_table[j])
             home_win = joint[il].sum()
             draw = joint[diag, diag].sum()
             away_win = joint[iu].sum()
@@ -288,7 +476,6 @@ def predict(n=1, show_all=False, w_book=0.7, w_poly=0.3):
     print("⚡ World Cup 2026 - Live Consensus Predictor")
     print("=" * 56)
 
-    # מושך Polymarket פעם אחת (שוק הזוכה)
     poly_winner = fetch_polymarket_2026()
 
     matches = get_matches(n, show_all)
@@ -299,7 +486,6 @@ def predict(n=1, show_all=False, w_book=0.7, w_poly=0.3):
         home, away = m["home_team"], m["away_team"]
         kickoff = m["commence_time"]
 
-        # מנסה למצוא שוק Polymarket ספציפי למשחק
         poly_match = fetch_polymarket_match(home, away)
 
         cons_h, cons_d, cons_a, used_sources = build_consensus(
@@ -333,7 +519,6 @@ def predict(n=1, show_all=False, w_book=0.7, w_poly=0.3):
             "sources": ",".join(used_sources),
         })
 
-    # שמירה
     if results:
         out = pd.DataFrame(results)
         out.to_csv(f"{DATA_DIR}/consensus_predictions.csv", index=False)
