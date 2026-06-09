@@ -139,52 +139,40 @@ def main():
     # ── Scoreline section ──────────────────────────────────────────────────
     st.subheader("Scoreline probabilities")
 
-    if poly_exact and w_poly > 0:
-        # Use live Polymarket exact-score market directly
-        matrix = poly_exact
-        top10 = top_scorelines(matrix, n=10)
-        scoreline_source = "Polymarket exact-score market"
+    # Always compute the Poisson matrix (needed for blending or pure fallback)
+    with st.spinner("Computing scoreline model..."):
+        lam_h, lam_a = estimate_expected_goals(cons_h, cons_d, cons_a)
+        poisson_matrix = scoreline_matrix(lam_h, lam_a)
 
-        cc1, cc2 = st.columns([1, 1])
-        with cc1:
-            st.metric("Most likely score", f"{top10[0][0]}  ({top10[0][1]}%)")
-            st.caption(f"Source: {scoreline_source}")
-        with cc2:
-            score_fig = go.Figure(go.Bar(
-                x=[s for s, _ in top10], y=[p for _, p in top10],
-                marker_color="#1D9E75",
-                text=[f"{p}%" for _, p in top10], textposition="outside",
-            ))
-            score_fig.update_layout(
-                yaxis_title="Probability (%)", xaxis_title="Score (home-away)",
-                plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", height=300,
-            )
-            st.plotly_chart(score_fig, use_container_width=True)
+    if poly_exact:
+        # Blend Polymarket exact scores with Poisson using the same weight as the slider
+        all_keys = set(poly_exact.keys()) | set(poisson_matrix.keys())
+        matrix = {
+            k: w_poly * poly_exact.get(k, 0) + (1 - w_poly) * poisson_matrix.get(k, 0)
+            for k in all_keys
+        }
+        scoreline_source = f"Polymarket {int(w_poly*100)}% + Poisson {int((1-w_poly)*100)}%"
     else:
-        # Fallback: Poisson model derived from consensus H/D/A
-        with st.spinner("Computing Poisson scoreline model..."):
-            lam_h, lam_a = estimate_expected_goals(cons_h, cons_d, cons_a)
-            matrix = scoreline_matrix(lam_h, lam_a)
-            top10 = top_scorelines(matrix, n=10)
-        scoreline_source = "Poisson model"
+        matrix = poisson_matrix
+        scoreline_source = f"Poisson model (xG: {lam_h:.2f} - {lam_a:.2f})"
 
-        cc1, cc2 = st.columns([1, 1])
-        with cc1:
-            st.metric("Expected goals", f"{lam_h:.2f} - {lam_a:.2f}")
-            st.caption(f"{home} xG: {lam_h:.2f} . {away} xG: {lam_a:.2f}")
-            st.metric("Most likely score", f"{top10[0][0]}  ({top10[0][1]}%)")
-            st.caption(f"Source: {scoreline_source}")
-        with cc2:
-            score_fig = go.Figure(go.Bar(
-                x=[s for s, _ in top10], y=[p for _, p in top10],
-                marker_color="#1D9E75",
-                text=[f"{p}%" for _, p in top10], textposition="outside",
-            ))
-            score_fig.update_layout(
-                yaxis_title="Probability (%)", xaxis_title="Score (home-away)",
-                plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", height=300,
-            )
-            st.plotly_chart(score_fig, use_container_width=True)
+    top10 = top_scorelines(matrix, n=10)
+
+    cc1, cc2 = st.columns([1, 1])
+    with cc1:
+        st.metric("Most likely score", f"{top10[0][0]}  ({top10[0][1]}%)")
+        st.caption(f"Source: {scoreline_source}")
+    with cc2:
+        score_fig = go.Figure(go.Bar(
+            x=[s for s, _ in top10], y=[p for _, p in top10],
+            marker_color="#1D9E75",
+            text=[f"{p}%" for _, p in top10], textposition="outside",
+        ))
+        score_fig.update_layout(
+            yaxis_title="Probability (%)", xaxis_title="Score (home-away)",
+            plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", height=300,
+        )
+        st.plotly_chart(score_fig, use_container_width=True)
 
     # Full scoreline heatmap (up to 3-3, same for both sources)
     st.subheader("Full scoreline grid")
