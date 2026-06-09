@@ -1,0 +1,100 @@
+enable_order_book,active,closed,archived,accepting_orders,accepting_order_timestamp,minimum_order_size,minimum_tick_size,condition_id,question_id,question,description,market_slug,end_date_iso,game_start_time,seconds_delay,fpmm,maker_base_fee,taker_base_fee,notifications_enabled,neg_risk,neg_risk_market_id,neg_risk_request_id,icon,image,rewards,is_50_50_outcome,tokens,tags
+False,True,True,False,False,,15,0.01,0x9c4d05a5b1cec55d56626ede111048cb6c43ec8e8c777f794b605d33be0c82ec,0xcf1433e753034fdae627356b9dcf18e20709ca67dcf61fb9f01195ae704fae76,Will Morocco win the 2022 World Cup?,"In Response to Trader Inquiry: This market may immediately resolve to “No” if the team is eliminated or otherwise has no path to victory based on the rules of the 2022 World Cup.
+
+---------------------------------------------------------------------------------------------------------------
+
+This market will resolve to ""Yes"" if Morocco is the Champion of FIFA World Cup Qatar 2022. Otherwise, this market will resolve to ""No"".
+
+If no Champion of FIFA World Cup Qatar 2022 is declared by December 31, 2022, 11:59:59 PM ET, this market will resolve to 50-50.
+
+The primary resolution source for this market will be official information from FIFA (e.g. https://www.fifa.com/fifaplus/en/tournaments/mens/worldcup/qatar2022/scores-fixtures), including official footage from the World Cup, however a consensus of credible reporting may also be used.",will-morocco-win-the-2022-world-cup,2022-12-18T00:00:00Z,,0,0x25F0587C29B38dB5E8183029715990Eb197D60e2,0,0,True,False,,,"https://polymarket-upload.s3.us-east-2.amazonaws.com/flag+morocco.png
+","https://polymarket-upload.s3.us-east-2.amazonaws.com/flag+morocco.png
+","{'rates': None, 'min_size': 0, 'max_spread': 0}",False,"[{'token_id': '105045584662682185685970556727114212674702864314804848740433640162087194646657', 'outcome': 'Yes', 'price': 0.0003, 'winner': False}, {'token_id': '68611577922343702457318296073818808816474842546502335416540125778940444670828', 'outcome': 'No', 'price': 0.9997, 'winner': False}]",['All']
+False,True,True,False,False,,15,0.01,0x1e7db4f6ca3919aa41887f9701605568da64287e1e1662aa7558a749ec61146c,0x99432ad5ca805946d7fc6b653bb44a5d37cdcfb893b2ebba9d6897f8271d2757,World Cup Final: France vs. Argentina,"In the upcoming World Cup Final, scheduled for December 18: 
+
+If France wins, this market will resolve to ""France"". 
+
+If Argentina wins, this market will resolve to ""Argentina"". 
+
+This market will resolve based on the winner of the game, which includes regular time, extra time, and penalties. If the game is not completed by December 25, 2022, this market will resolve 50-50.",world-cup-final-france-vs-argentina,2022-12-18T00:00:00Z,2022-12-18T15:00:00Z,3,0x35684edE9b6b739477d6b53C002b6Ccdb632ED3d,0,0,True,False,,,https://polymarket-upload.s3.us-east-2.amazonaws.com/world-cup-final-france-vs-argentina-f6fc5cad-47b6-4247-a1e4-21ce9df0000e.png,https://polymarket-upload.s3.us-east-2.amazonaws.com/world-cup-final-france-vs-argentina-f6fc5cad-47b6-4247-a1e4-21ce9df0000e.png,"{'rates': None, 'min_size': 0, 'max_spread': 0}",False,"[{'token_id': '105392100504032111304134821100444646936144151941404393276849684670593970547907', 'outcome': 'France', 'price': 0, 'winner': False}, {'token_id': '6089433785251689770076375988640770693334877259777308137609453855410548953467', 'outcome': 'Argentina', 'price': 1, 'winner': False}]",['All']
+False,True,True,False,False,,15,0.01,0xe4d3e91c7fa9bf0391fd77114f17a2a00d2fb23c4a9567c29d3dfe4746685a94,0x12c27daa2731a410e90c06feb32d3f51446c56e39a297f8f0e535259eb0d3e71,World Cup 3rd Place: Croatia vs. Morocco,"In the upcoming World Cup soccer game for 3rd Place, scheduled for December 17: 
+
+If Croatia wins, this market will resolve to ""Croatia"". 
+
+If Morocco wins, this market will resolve to ""Morocco"". 
+
+This market will resolve based on the winner of the game, which includes regular time, extra time, and penalties. If the game is not completed by December 24, 2022, this market will resolve 50-50.",world-cup-3rd-place-croatia-vs-morocco,2022-12-17T00:00:00Z,2022-12-17T15:00:00Z,3,0xD7c5a11707fBeAc8E2b6E27ECDF159ccf5ba54C8,0,0,True,False,,,https://polymarket-upload.s3.us-east-2.amazonaws.com/world-cup-3rd-place-croatia-vs-morocco-80a938d3-357c-4385-9e71-bbef00fa0f76.png,https://polymarket-upload.s3.us-east-2.amazonaws.com/world-cup-3rd-place-croatia-vs-morocco-80a938d3-357c-4385-9e71-bbef00fa0f76.png,"{'rates': None, 'min_size': 0, 'max_spread': 0}",False,"[{'token_id': '34128948498964939853102398325306155688257269216438090996977511798069281111048', 'outcome': 'Croatia', 'price': 1, 'winner': False}, {'token_id': '60930293954076698452675765202055684980154138997530611162072208293416001004142', 'outcome': 'Morocco', 'price': 0, 'winner': False}]",['All']
+False,True,True,False,False,,15,0.01,0x1444aa19610940c750a2fb4ac6c26bccbc0080a8b2f93e715b69d443e0cc7b18,0x00dc462d4fdb03e3f9f1a2b23f8a19ae5a5f3e98373930126d3f78b39301334f,World Cup: Saturday - Portugal vs. Morocco,"In the upcoming World Cup Quarter-finals soccer game, scheduled for December 10:  
+
+If Portugal wins, this market will resolve to ""Portugal"".
+If Morocco wins, this market will resolve to ""Morocco"". 
+
+This market will resolve based on the winner of the game, which includes regular time, extra time, and penalties.
+
+If the game is not completed by December 18, 2022, this market will resolve 50-50.",world-cup-saturday-portugal-vs-morocco,2022-12-10T00:00:00Z,2022-12-10T15:00:00Z,3,0xD4bD9bbB0cC7499b8CCfE6BcCEABD709Ecf653d9,0,0,True,False,,,https://polymarket-upload.s3.us-east-2.amazonaws.com/flag+portugal.png,https://polymarket-upload.s3.us-east-2.amazonaws.com/flag+portugal.png,"{'rates': None, 'min_size': 0, 'max_spread': 0}",False,"[{'token_id': '57497473000369437350798096518722555583048163398825407567074259414631615679672', 'outcome': 'Portugal', 'price': 0, 'winner': False}, {'token_id': '46445877220496307025442939730529345616312175976266245436030960374828619760606', 'outcome': 'Morocco', 'price': 1, 'winner': False}]",['All']
+False,True,True,False,False,,15,0.01,0x7a1fe597ac9644de6b97eeee238ba2b6439f091ff1dc172f9858c20904ff923f,0xae408845ab043b32decfbac0751c8087828c633f5a6cd8787ad30b3c22f21469,World Cup: Tuesday - Argentina vs. Croatia,"In the upcoming World Cup Semifinals soccer game, scheduled for December 13:  
+
+If Argentina wins, this market will resolve to ""Argentina"".
+If Croatia wins, this market will resolve to ""Croatia"". 
+
+This market will resolve based on the winner of the game, which includes regular time, extra time, and penalties.
+
+If the game is not completed by December 18, 2022, this market will resolve 50-50.",world-cup-tuesday-argentina-vs-croatia,2022-12-13T00:00:00Z,2022-12-13T19:00:00Z,3,0x89F9A2da2a32bd176C82c3f5Bba43DF97bD71A24,0,0,True,False,,,https://polymarket-upload.s3.us-east-2.amazonaws.com/flag+argentina.png,https://polymarket-upload.s3.us-east-2.amazonaws.com/flag+argentina.png,"{'rates': None, 'min_size': 0, 'max_spread': 0}",False,"[{'token_id': '56331120378768085083807049568748918263528811106383757925339269209247241825845', 'outcome': 'Argentina', 'price': 0.9999, 'winner': False}, {'token_id': '86771234057093018828456100884278305817453445557880068058258911571182778590112', 'outcome': 'Croatia', 'price': 0.0001, 'winner': False}]",['All']
+False,True,True,False,False,,15,0.01,0x3990f55503d1f1b9c94153327210b8b8eec101006c47a0c1f754af80d813f128,0x2f72e82fef71d22a3c66f2c84e52c7e32daede5d17893f40674914652c865884,Will Argentina win the 2022 World Cup?,"In Response to Trader Inquiry: This market may immediately resolve to “No” if the team is eliminated or otherwise has no path to victory based on the rules of the 2022 World Cup.
+
+---------------------------------------------------------------------------------------------------------------
+
+This market will resolve to ""Yes"" if Argentina is the Champion of FIFA World Cup Qatar 2022. Otherwise, this market will resolve to ""No"".
+
+If no Champion of FIFA World Cup Qatar 2022 is declared by December 31, 2022, 11:59:59 PM ET, this market will resolve to 50-50.
+
+The primary resolution source for this market will be official information from FIFA (e.g. https://www.fifa.com/fifaplus/en/tournaments/mens/worldcup/qatar2022/scores-fixtures), including official footage from the World Cup, however a consensus of credible reporting may also be used.",will-argentina-win-the-2022-world-cup,2022-12-18T00:00:00Z,,0,0x455bA72BA53773cBF347981D26386473B7e10a45,0,0,True,False,,,"https://polymarket-upload.s3.us-east-2.amazonaws.com/flag+argentina.png
+","https://polymarket-upload.s3.us-east-2.amazonaws.com/flag+argentina.png
+","{'rates': None, 'min_size': 0, 'max_spread': 0}",False,"[{'token_id': '26123139076199609978522847027495726840275308007885498317455055187418797035383', 'outcome': 'Yes', 'price': 0.9993, 'winner': False}, {'token_id': '101816010996196886619009744418883592340857425486409910131450672434879405150269', 'outcome': 'No', 'price': 0.0007, 'winner': False}]",['All']
+False,True,True,False,False,,15,0.01,0xb51ccf704ac1fe87750db843ef3982e3dd37e4405c1dc545b49b416e0d64efd7,0xe5b78778e1b4d8669fa254322ed6a82bbba75db0b85b72f2e227d4ff51efa815,World Cup: Saturday - France vs. England,"In the upcoming World Cup Quarter-finals soccer game, scheduled for December 10:  
+
+If France wins, this market will resolve to ""France"".
+If England wins, this market will resolve to ""England"". 
+
+This market will resolve based on the winner of the game, which includes regular time, extra time, and penalties.
+
+If the game is not completed by December 18, 2022, this market will resolve 50-50.",world-cup-saturday-france-vs-england,2022-12-10T00:00:00Z,2022-12-10T19:00:00Z,3,0x9458ff6E2A5312c0C1B19436c4510959A7056C76,0,0,True,False,,,https://polymarket-upload.s3.us-east-2.amazonaws.com/flag+france.png,https://polymarket-upload.s3.us-east-2.amazonaws.com/flag+france.png,"{'rates': None, 'min_size': 0, 'max_spread': 0}",False,"[{'token_id': '85616932232674288042346062547007149966268283433490516024559200198439648257677', 'outcome': 'France', 'price': 0.9999, 'winner': False}, {'token_id': '385167050514863041928081391056086691177616020327245197958833157777967264474', 'outcome': 'England', 'price': 0.0001, 'winner': False}]",['All']
+False,True,True,False,False,,15,0.01,0x0da3bb900632c5dfa0dcda6df806fc2b84862bb1820a141f9a22e0fcf27c8d55,0xd2cbeca36abcc2b0fe7465078cc1df91b02a63259e979dd36dc5d959838dbcda,World Cup: Wednesday - France vs. Morocco,"In the upcoming World Cup Semifinals soccer game, scheduled for December 14:  
+
+If France wins, this market will resolve to ""France"".
+If Morocco wins, this market will resolve to ""Morocco"". 
+
+This market will resolve based on the winner of the game, which includes regular time, extra time, and penalties.
+
+If the game is not completed by December 18, 2022, this market will resolve 50-50.",world-cup-wednesday-france-vs-morocco,2022-12-14T00:00:00Z,2022-12-14T19:00:00Z,3,0xd467112657537e5165E55D488419697835A336b3,0,0,True,False,,,https://polymarket-upload.s3.us-east-2.amazonaws.com/flag+france.png,https://polymarket-upload.s3.us-east-2.amazonaws.com/flag+france.png,"{'rates': None, 'min_size': 0, 'max_spread': 0}",False,"[{'token_id': '35135409348165296533425769152169889177123033197141413836854440313087551126988', 'outcome': 'France', 'price': 0.9997, 'winner': False}, {'token_id': '80842897032421863068904294259184211620480611515975055424063236856134499439265', 'outcome': 'Morocco', 'price': 0.0003, 'winner': False}]",['All']
+False,True,True,False,False,,15,0.01,0xd425eb1d83aef0500596c46254b199a4fa44247da2d61b0a359f81c6e8211e4f,0xaca672706eec97de90b20b3c3a109af927de859a54e60b3d5eec0c97539d0bbc,Will France win the 2022 World Cup?,"In Response to Trader Inquiry: This market may immediately resolve to “No” if the team is eliminated or otherwise has no path to victory based on the rules of the 2022 World Cup.
+
+---------------------------------------------------------------------------------------------------------------
+
+This market will resolve to ""Yes"" if France is the Champion of FIFA World Cup Qatar 2022. Otherwise, this market will resolve to ""No"".
+
+If no Champion of FIFA World Cup Qatar 2022 is declared by December 31, 2022, 11:59:59 PM ET, this market will resolve to 50-50.
+
+The primary resolution source for this market will be official information from FIFA (e.g. https://www.fifa.com/fifaplus/en/tournaments/mens/worldcup/qatar2022/scores-fixtures), including official footage from the World Cup, however a consensus of credible reporting may also be used.",will-france-win-the-2022-world-cup,2022-12-18T00:00:00Z,,0,0xFD2BBBf6FB2ADd9eF8cb1038Fe8BfBea6933ebA1,0,0,True,False,,,"https://polymarket-upload.s3.us-east-2.amazonaws.com/flag+france.png
+","https://polymarket-upload.s3.us-east-2.amazonaws.com/flag+france.png
+","{'rates': None, 'min_size': 0, 'max_spread': 0}",False,"[{'token_id': '114371001821164164902646439685427759853981924302906124203753724550487055672889', 'outcome': 'Yes', 'price': 0.0004, 'winner': False}, {'token_id': '25285210070220154879776098149650327251027554102335965508704565054853282633381', 'outcome': 'No', 'price': 0.9996, 'winner': False}]",['All']
+False,True,True,False,False,,15,0.01,0x88dd8f8829a7efdb458e8b551fa332d466898f01b3ed26b02727a070303f3a4b,0x322f63a0bd2766af1d65675a99ea49c90b1ffc01bffd1f6412a34873c887ceca,Will Karim Benzema play in the France v. Argentina World Cup Final?,"Karim Benzema, forward for Real Madrid, sustained a thigh injury while training shortly before the World Cup, and has had to sit out all games he was scheduled to play for France to this point. He has refused to rule out a return to the field for the World Cup final, and excitement is growing on rumors that he may fly out to Qatar for France's upcoming match against Argentina.
+
+This market will resolve to ""Yes"" if Karim Benzema engages in any playtime during the World Cup final match between Argentina and France, scheduled for December 18, 2022. Otherwise, this market will resolve to ""No"".
+
+This market may only resolve once the game is complete. 
+
+The primary resolution source for this market will be official information from the French national football team, FIFA, Karim Benzema, and/or footage of the upcoming match between France and Argentina, however a consensus of credible reporting will also be used.",will-karim-benzema-play-in-the-france-v-argentina-world-cup-final,2022-12-18T00:00:00Z,,0,0xd9c4E66a120DaF896018b7eE196b65151dE6c8b4,0,0,True,False,,,"https://polymarket-upload.s3.us-east-2.amazonaws.com/Karim+Benzema.png
+","https://polymarket-upload.s3.us-east-2.amazonaws.com/Karim+Benzema.png
+","{'rates': None, 'min_size': 0, 'max_spread': 0}",False,"[{'token_id': '23297970555312850813091213675610498196691708563627225415425080042702356612772', 'outcome': 'Yes', 'price': 0.0067, 'winner': False}, {'token_id': '22915874961425713727313156987577198018583072296480438115193561230646321616536', 'outcome': 'No', 'price': 0.9933, 'winner': False}]",['All']
+False,True,True,False,False,,15,0.01,0xe72ccc87d52382d893534f061a5a6adf1653ea8c17aa143702119a84a810be33,0xfe6ef163a06a95ad5cbf036b83192555f84523b456a978f076c9f6cda4bddf7f,Will Croatia win the 2022 World Cup?,"In Response to Trader Inquiry: This market may immediately resolve to “No” if the team is eliminated or otherwise has no path to victory based on the rules of the 2022 World Cup.
+
+---------------------------------------------------------------------------------------------------------------
+
+This market will resolve to ""Yes"" if Croatia is the Champion of FIFA World Cup Qatar 2022. Otherwise, this market will resolve to ""No"".
+
+If no Champion of FIFA World Cup Qatar 2022 is declared by December 31, 2022, 11:59:59 PM ET, this market will resolve to 50-50.
+
+The primary resolution source for this market will be official information from FIFA (e.g. https://www.fifa.com/fifaplus/en/tournaments/mens/worldcup/qatar2022/scores-fixtures), including official footage from the World Cup, however a consensus of credible reporting may also be used.",will-croatia-win-the-2022-world-cup,2022-12-18T00:00:00Z,,0,0x04F164CcD4f9E866C6afae0dBc88E53c7121a9a6,0,0,True,False,,,"https://polymarket-upload.s3.us-east-2.amazonaws.com/flag+croatia.png
+","https://polymarket-upload.s3.us-east-2.amazonaws.com/flag+croatia.png
+","{'rates': None, 'min_size': 0, 'max_spread': 0}",False,"[{'token_id': '1045990436189152068423220432870986041184604466981267113710148075294820184459', 'outcome': 'Yes', 'price': 0.0002, 'winner': False}, {'token_id': '51135908343901278183693801383752935878686703491455393952891563502325813041701', 'outcome': 'No', 'price': 0.9998, 'winner': False}]",['All']
