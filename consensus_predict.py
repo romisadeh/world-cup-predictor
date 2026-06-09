@@ -137,8 +137,6 @@ def fetch_polymarket_2026():
     מושך שווקי מונדיאל 2026 פעילים מ-Gamma API (ללא צורך באימות).
     מחזיר dict: {team_name: win_probability} משוק "World Cup Winner".
     """
-    print("🔮 מושך Polymarket (מונדיאל 2026)...", end=" ", flush=True)
-
     probs = {}
     slugs = ["world-cup-winner", "2026-world-cup-winner", "fifa-world-cup-2026-winner"]
 
@@ -166,11 +164,8 @@ def fetch_polymarket_2026():
                 if prices and team:
                     probs[team.strip()] = float(prices[0])
 
-        print(f"✅ {len(probs)} קבוצות")
-
-    except Exception as e:
-        print(f"⚠️  ({e})")
-        print("   ממשיך עם אודס בוקמייקרים בלבד")
+    except Exception:
+        pass
 
     return probs
 
